@@ -15,19 +15,19 @@ import {
   ImageUrlField,
   VideoUrlField,
   AttachmentField,
-  ElementTypeField,
-  ParentSelectionField,
-  AuthorInfoFields
+  ElementSelectionField
 } from "./FormFields";
 
 const BlogElementForm = () => {
   const [previewMode, setPreviewMode] = useState(false);
   const [selectedType, setSelectedType] = useState<string>("supercategory");
   const [availableParents, setAvailableParents] = useState<Array<{ id: number, title: string }>>([]);
+  const [canCreate, setCanCreate] = useState(true);
   
   const form = useForm<BlogElementFormValues>({
     resolver: zodResolver(blogElementSchema),
     defaultValues: {
+      selectionType: "none",
       type: "supercategory",
       title: "",
       subtitle: "",
@@ -41,16 +41,35 @@ const BlogElementForm = () => {
     },
   });
   
-  // Update available parent elements when type changes
+  // Update available parent elements when selection type changes
   useEffect(() => {
-    if (selectedType === "category") {
+    const selectionType = form.watch("selectionType");
+    
+    if (selectionType === "supercategory") {
       setAvailableParents(mockParentElements.supercategories);
-    } else if (selectedType === "subcategory") {
+    } else if (selectionType === "category") {
       setAvailableParents(mockParentElements.categories);
+    } else if (selectionType === "subcategory") {
+      setAvailableParents(mockParentElements.subcategories);
+      setCanCreate(false);
     } else {
       setAvailableParents([]);
+      setCanCreate(true);
     }
-  }, [selectedType]);
+    
+    // Update the type based on selection
+    if (selectionType === "none") {
+      setSelectedType("supercategory");
+      form.setValue("type", "supercategory");
+    } else if (selectionType === "supercategory") {
+      setSelectedType("category");
+      form.setValue("type", "category");
+    } else if (selectionType === "category") {
+      setSelectedType("subcategory");
+      form.setValue("type", "subcategory");
+    }
+    
+  }, [form.watch("selectionType")]);
   
   const onSubmit = (data: BlogElementFormValues) => {
     console.log("Form submitted:", data);
@@ -58,13 +77,27 @@ const BlogElementForm = () => {
       title: "Blog element created",
       description: `Successfully created ${data.type}: ${data.title}`,
     });
-    form.reset();
+    form.reset({
+      selectionType: "none",
+      type: "supercategory",
+      title: "",
+      subtitle: "",
+      description: "",
+      visibleToRole: "all",
+      imageUrl: "",
+      videoUrl: "",
+      full_name: "",
+      email: "",
+      country: "",
+    });
   };
 
-  const handleTypeChange = (value: string) => {
-    setSelectedType(value);
-    form.setValue("type", value as "supercategory" | "category" | "subcategory");
-    form.setValue("parentId", undefined); // Reset parent selection when type changes
+  const handleSelectionTypeChange = (value: string) => {
+    if (value === "subcategory") {
+      setCanCreate(false);
+    } else {
+      setCanCreate(true);
+    }
   };
 
   const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,47 +123,45 @@ const BlogElementForm = () => {
       {!previewMode ? (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <ElementTypeField form={form} handleTypeChange={handleTypeChange} />
+            <ElementSelectionField 
+              form={form}
+              onSelectionTypeChange={handleSelectionTypeChange}
+            />
             
-            {/* Parent element selection */}
-            {(selectedType === "category" || selectedType === "subcategory") && (
-              <ParentSelectionField 
-                form={form}
-                availableParents={availableParents}
-                selectedType={selectedType}
-              />
-            )}
-            
-            <TitleField form={form} />
-            
-            {selectedType === "supercategory" && (
-              <SubtitleField form={form} />
-            )}
-            
-            <DescriptionField form={form} />
-            
-            {selectedType === "supercategory" && (
-              <VisibilityField form={form} />
-            )}
-            
-            {selectedType === "category" && (
-              <ImageUrlField form={form} />
-            )}
-            
-            {selectedType === "subcategory" && (
+            {canCreate && (
               <>
-                <VideoUrlField form={form} />
-                <AttachmentField 
-                  form={form}
-                  handleAttachmentChange={handleAttachmentChange}
-                />
+                <TitleField form={form} />
+                
+                {selectedType === "supercategory" && (
+                  <SubtitleField form={form} />
+                )}
+                
+                <DescriptionField form={form} />
+                
+                {selectedType === "supercategory" && (
+                  <VisibilityField form={form} />
+                )}
+                
+                {selectedType === "category" && (
+                  <ImageUrlField form={form} />
+                )}
+                
+                {selectedType === "subcategory" && (
+                  <>
+                    <VideoUrlField form={form} />
+                    <AttachmentField 
+                      form={form}
+                      handleAttachmentChange={handleAttachmentChange}
+                    />
+                  </>
+                )}
+                
+                {/* Author Information Fields */}
+                <AuthorInfoFields form={form} />
+                
+                <Button type="submit" className="mt-4">Create Blog Element</Button>
               </>
             )}
-            
-            {/* Author Information Fields */}
-            <AuthorInfoFields form={form} />
-            
-            <Button type="submit" className="mt-4">Create Blog Element</Button>
           </form>
         </Form>
       ) : (

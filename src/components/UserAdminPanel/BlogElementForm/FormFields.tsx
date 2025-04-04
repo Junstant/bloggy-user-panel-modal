@@ -1,15 +1,173 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { BlogElementFormValues } from "./types";
+import { BlogElementFormValues, mockParentElements } from "./types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface CommonFieldProps {
   form: UseFormReturn<BlogElementFormValues>;
 }
+
+export const ElementSelectionField: React.FC<{
+  form: UseFormReturn<BlogElementFormValues>;
+  onSelectionTypeChange: (value: string) => void;
+}> = ({ form, onSelectionTypeChange }) => {
+  // Define what can be created based on the selection
+  const getAvailableTypes = (selectionType: string) => {
+    switch (selectionType) {
+      case "none":
+        return ["supercategory"];
+      case "supercategory":
+        return ["category"];
+      case "category":
+        return ["subcategory"];
+      case "subcategory":
+        return [];
+      default:
+        return ["supercategory"];
+    }
+  };
+
+  const selectionType = form.watch("selectionType") || "none";
+  const availableTypes = getAvailableTypes(selectionType);
+  
+  // If selection type changes, update the type accordingly
+  useEffect(() => {
+    if (availableTypes.length > 0) {
+      form.setValue("type", availableTypes[0] as "supercategory" | "category" | "subcategory");
+    }
+  }, [form.watch("selectionType")]);
+
+  return (
+    <>
+      <FormField
+        control={form.control}
+        name="selectionType"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Select parent element type</FormLabel>
+            <Select
+              onValueChange={(value) => {
+                field.onChange(value);
+                onSelectionTypeChange(value);
+                // Reset the parent ID when changing selection type
+                form.setValue("selectedParentId", undefined);
+              }}
+              value={field.value}
+            >
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a parent element type" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="none">None (Create Supercategory)</SelectItem>
+                <SelectItem value="supercategory">Supercategory (Create Category)</SelectItem>
+                <SelectItem value="category">Category (Create Subcategory)</SelectItem>
+                <SelectItem value="subcategory">Subcategory (Cannot create children)</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      {form.watch("selectionType") !== "none" && (
+        <FormField
+          control={form.control}
+          name="selectedParentId"
+          render={({ field }) => {
+            const selectionType = form.watch("selectionType");
+            let availableParents: { id: number; title: string }[] = [];
+            
+            if (selectionType === "supercategory") {
+              availableParents = mockParentElements.supercategories;
+            } else if (selectionType === "category") {
+              availableParents = mockParentElements.categories;
+            } else if (selectionType === "subcategory") {
+              availableParents = mockParentElements.subcategories;
+            }
+            
+            return (
+              <FormItem>
+                <FormLabel>Select Parent {selectionType}</FormLabel>
+                <Select
+                  onValueChange={(value) => field.onChange(parseInt(value))}
+                  value={field.value?.toString()}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={`Select a ${selectionType}`} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {availableParents.map((parent) => (
+                      <SelectItem key={parent.id} value={parent.id.toString()}>
+                        {parent.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
+      )}
+      
+      {form.watch("selectionType") === "subcategory" && (
+        <Alert variant="warning" className="bg-yellow-50 border-yellow-200">
+          <AlertCircle className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="text-yellow-700">
+            Subcategories cannot have child elements. You cannot create new elements here.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {form.watch("selectionType") !== "subcategory" && (
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => {
+            const selectionType = form.watch("selectionType");
+            const availableTypes = getAvailableTypes(selectionType);
+            
+            return (
+              <FormItem>
+                <FormLabel>Element Type to Create</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  disabled={availableTypes.length === 0 || availableTypes.length === 1}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select element type to create" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {availableTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type === "supercategory" ? "Super Category" : 
+                         type === "category" ? "Category" : "Sub Category"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
+      )}
+    </>
+  );
+};
 
 export const TitleField: React.FC<CommonFieldProps> = ({ form }) => (
   <FormField
@@ -139,37 +297,6 @@ export const AttachmentField: React.FC<{
     </FormControl>
     <FormMessage />
   </FormItem>
-);
-
-export const ElementTypeField: React.FC<{
-  form: UseFormReturn<BlogElementFormValues>;
-  handleTypeChange: (value: string) => void;
-}> = ({ form, handleTypeChange }) => (
-  <FormField
-    control={form.control}
-    name="type"
-    render={({ field }) => (
-      <FormItem>
-        <FormLabel>Element Type</FormLabel>
-        <Select
-          onValueChange={(value) => handleTypeChange(value)}
-          defaultValue={field.value}
-        >
-          <FormControl>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a type" />
-            </SelectTrigger>
-          </FormControl>
-          <SelectContent>
-            <SelectItem value="supercategory">Super Category</SelectItem>
-            <SelectItem value="category">Category</SelectItem>
-            <SelectItem value="subcategory">Sub Category</SelectItem>
-          </SelectContent>
-        </Select>
-        <FormMessage />
-      </FormItem>
-    )}
-  />
 );
 
 export const ParentSelectionField: React.FC<{

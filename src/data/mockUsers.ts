@@ -7,6 +7,9 @@ export interface User {
   active: boolean;
   joinDate: string;
   avatar?: string;
+  full_name?: string;
+  email_contact?: string;
+  country?: string;
 }
 
 export const MOCK_USERS: User[] = [
@@ -18,6 +21,9 @@ export const MOCK_USERS: User[] = [
     active: true,
     joinDate: "2023-01-10",
     avatar: "https://i.pravatar.cc/150?img=1",
+    full_name: "María Concepción García López",
+    email_contact: "maria.personal@example.com",
+    country: "Spain"
   },
   {
     id: "2",
@@ -27,6 +33,8 @@ export const MOCK_USERS: User[] = [
     active: true,
     joinDate: "2023-02-15",
     avatar: "https://i.pravatar.cc/150?img=8",
+    full_name: "Carlos Alberto Rodríguez Méndez",
+    country: "Mexico"
   },
   {
     id: "3",
@@ -36,6 +44,8 @@ export const MOCK_USERS: User[] = [
     active: true,
     joinDate: "2023-03-22",
     avatar: "https://i.pravatar.cc/150?img=5",
+    email_contact: "ana.writer@example.com",
+    country: "Colombia"
   },
   {
     id: "4",
@@ -54,6 +64,7 @@ export const MOCK_USERS: User[] = [
     active: true,
     joinDate: "2023-05-12",
     avatar: "https://i.pravatar.cc/150?img=23",
+    country: "Argentina"
   },
   {
     id: "6",
@@ -63,6 +74,7 @@ export const MOCK_USERS: User[] = [
     active: true,
     joinDate: "2023-06-18",
     avatar: "https://i.pravatar.cc/150?img=12",
+    full_name: "Miguel Ángel González Pérez"
   },
   {
     id: "7",
@@ -81,5 +93,8 @@ export const MOCK_USERS: User[] = [
     active: false,
     joinDate: "2023-08-30",
     avatar: "https://i.pravatar.cc/150?img=53",
+    full_name: "David Alejandro Pérez Ramírez",
+    email_contact: "david.work@example.com",
+    country: "Chile"
   },
 ];
