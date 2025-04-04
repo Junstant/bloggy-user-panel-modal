@@ -12,7 +12,7 @@ const UserAdminButton = () => {
       className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
     >
       <Users size={16} />
-      <span>Admin Panel</span>
+      <span>Blog Admin</span>
     </Button>
   );
 };
